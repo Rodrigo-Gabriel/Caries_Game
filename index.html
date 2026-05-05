@@ -1,375 +1,96 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Batalha Contra a Cárie</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{width:100%;height:100%;background:#0f1117}
-
-#game{
-  font-family:system-ui,sans-serif;
-  background:#0f1117;
-  color:#e8e8e8;
-  width:100%;
-  min-height:100vh;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:flex-start;
-}
-
-.screen{
-  display:none;
-  flex-direction:column;
-  align-items:center;
-  gap:clamp(10px,2vw,18px);
-  padding:clamp(16px,3vw,32px) clamp(12px,4vw,24px);
-  width:100%;
-  max-width:680px;
-  min-height:100vh;
-  justify-content:center;
-}
-.screen.active{display:flex}
-
-.top-bar{
-  display:flex;width:100%;align-items:center;justify-content:space-between;
-  background:#1a1d27;border:0.5px solid #2a2d3a;border-radius:12px;
-  padding:clamp(8px,1.5vw,12px) clamp(10px,2vw,16px);
-  gap:8px;
-}
-.hud-item{display:flex;flex-direction:column;align-items:center;gap:1px;flex:1}
-.hud-label{color:#555;font-size:clamp(9px,1.5vw,11px);text-transform:uppercase;letter-spacing:.4px}
-.hud-val{font-weight:700;font-size:clamp(14px,2.5vw,18px);color:#e8e8e8}
-.lives-icons{font-size:clamp(12px,2vw,15px);letter-spacing:2px}
-
-.prog-wrap{width:100%;height:5px;background:#1a1d27;border-radius:4px;overflow:hidden}
-.prog-bar{height:100%;background:#378add;border-radius:4px;transition:width .4s}
-
-.qcard{
-  width:100%;background:#1a1d27;border:0.5px solid #2a2d3a;
-  border-radius:12px;padding:clamp(14px,2.5vw,20px);
-}
-.qcard h3{
-  font-size:clamp(13px,2vw,15px);font-weight:500;color:#e8e8e8;
-  line-height:1.55;margin-bottom:clamp(10px,2vw,14px);
-}
-.opts{display:flex;flex-direction:column;gap:clamp(6px,1.2vw,9px)}
-.opt{
-  width:100%;padding:clamp(10px,1.8vw,12px) clamp(12px,2vw,14px);
-  border-radius:8px;border:0.5px solid #2a2d3a;background:#13161f;
-  cursor:pointer;font-size:clamp(12px,1.8vw,14px);font-weight:500;color:#c8c8c8;
-  text-align:left;transition:border-color .15s,background .15s,color .15s;
-  line-height:1.4;
-}
-.opt:hover:not(.locked){border-color:#378add;background:#0c1929;color:#e8e8e8}
-.opt.correct{background:#0d2015;border-color:#3b6d11;color:#97c459}
-.opt.wrong{background:#200d0d;border-color:#a32d2d;color:#f09595}
-
-.feedback{
-  width:100%;padding:clamp(10px,1.8vw,13px) clamp(12px,2vw,15px);
-  border-radius:8px;font-size:clamp(11px,1.7vw,13px);font-weight:500;
-  line-height:1.6;display:none;
-}
-.feedback.show{display:block}
-.feedback.ok{background:#0d2015;color:#97c459;border:0.5px solid #3b6d11}
-.feedback.err{background:#200d0d;color:#f09595;border:0.5px solid #a32d2d}
-
-.btn{
-  padding:clamp(9px,1.6vw,11px) clamp(16px,3vw,22px);
-  border-radius:8px;border:0.5px solid #2a2d3a;
-  background:#1a1d27;font-size:clamp(12px,1.8vw,14px);font-weight:600;
-  cursor:pointer;color:#c8c8c8;transition:background .15s,border-color .15s;
-  white-space:nowrap;
-}
-.btn:hover{background:#22263a;border-color:#378add;color:#e8e8e8}
-.btn.primary{background:#185fa5;color:#e6f1fb;border-color:#185fa5}
-.btn.primary:hover{background:#0c447c}
-.btn.ghost{background:transparent;border-color:#2a2d3a;color:#777}
-.btn.ghost:hover{background:#1a1d27;color:#c8c8c8}
-.btn.full{width:100%}
-
-.back-btn{
-  display:flex;align-items:center;gap:4px;padding:6px 12px;
-  border-radius:8px;border:0.5px solid #2a2d3a;background:transparent;
-  font-size:clamp(11px,1.6vw,13px);font-weight:500;cursor:pointer;color:#777;
-  transition:color .15s,border-color .15s;
-}
-.back-btn:hover{color:#c8c8c8;border-color:#555}
-
-.status-msg{font-size:clamp(11px,1.6vw,13px);font-weight:600;min-height:18px}
-.status-msg.ok{color:#97c459}
-.status-msg.err{color:#f09595}
-.row-end{display:flex;justify-content:space-between;align-items:center;width:100%;gap:10px}
-
-.logo-big{font-size:clamp(40px,8vw,60px);text-align:center;line-height:1.1}
-.game-title{font-size:clamp(18px,3.5vw,24px);font-weight:700;color:#e8e8e8;text-align:center}
-.game-sub{font-size:clamp(11px,1.8vw,13px);color:#666;text-align:center;line-height:1.7;max-width:320px}
-.badge-row{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
-.badge{
-  padding:3px 10px;border-radius:99px;font-size:clamp(10px,1.5vw,11px);font-weight:600;
-  background:#0c1929;color:#85b7eb;border:0.5px solid #185fa5;
-}
-
-.stage-grid{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:clamp(8px,1.5vw,12px);width:100%;
-}
-.stage-card{
-  background:#1a1d27;border:0.5px solid #2a2d3a;border-radius:12px;
-  padding:clamp(12px,2vw,16px) clamp(8px,1.5vw,12px);
-  cursor:pointer;text-align:center;transition:border-color .15s,background .15s;
-}
-.stage-card:hover{border-color:#378add;background:#0c1929}
-.stage-card .sc-icon{font-size:clamp(22px,4vw,28px);margin-bottom:6px}
-.stage-card .sc-name{font-size:clamp(12px,1.8vw,14px);font-weight:700;color:#e8e8e8}
-.stage-card .sc-desc{font-size:clamp(10px,1.5vw,12px);color:#555;margin-top:2px}
-.stage-card .sc-score{font-size:clamp(10px,1.5vw,12px);color:#378add;margin-top:4px;font-weight:600}
-.stage-card.locked{opacity:.3;cursor:default;pointer-events:none}
-.stage-card.done{border-color:#27500a}
-
-.medal-big{font-size:clamp(44px,8vw,58px);text-align:center}
-.score-big{font-size:clamp(44px,8vw,56px);font-weight:900;color:#378add}
-.result-msg{font-size:clamp(12px,1.8vw,14px);color:#888;text-align:center;max-width:300px;line-height:1.65}
-.btn-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%}
-.btn-row .btn{flex:1;min-width:130px;text-align:center}
-
-.stage-topbar{
-  display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;
-}
-.stage-badge{
-  font-size:clamp(10px,1.5vw,12px);color:#555;font-weight:500;
-  background:#1a1d27;border:0.5px solid #2a2d3a;border-radius:6px;
-  padding:4px 10px;white-space:nowrap;
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Batalha Contra a Cárie</title>
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-<div id="game">
+  <div id="game">
 
-  <!-- HOME -->
-  <div class="screen active" id="home">
-    <div class="logo-big">🦷</div>
-    <div class="game-title">Batalha Contra a Cárie</div>
-    <div class="game-sub">4 fases clínicas progressivas sobre etiologia, diagnóstico, prevenção e tratamento.</div>
-    <div class="badge-row">
-      <span class="badge">Etiologia</span>
-      <span class="badge">Diagnóstico</span>
-      <span class="badge">Prevenção</span>
-      <span class="badge">Clínica</span>
-    </div>
-    <button class="btn primary full" onclick="showStages()">Iniciar jogo →</button>
-  </div>
-
-  <!-- STAGE SELECT -->
-  <div class="screen" id="stageSelect">
-    <div class="stage-topbar">
-      <button class="back-btn" onclick="show('home')">← Voltar</button>
-      <span style="font-size:clamp(12px,2vw,14px);font-weight:600;color:#e8e8e8">Escolha a fase</span>
-      <span style="min-width:60px"></span>
-    </div>
-    <div class="stage-grid" id="stageGrid"></div>
-  </div>
-
-  <!-- GAMEPLAY -->
-  <div class="screen" id="gameplay">
-    <div class="stage-topbar">
-      <button class="back-btn" onclick="confirmBack()">← Menu</button>
-      <span class="stage-badge" id="stageLabel"></span>
-    </div>
-
-    <div class="top-bar">
-      <div class="hud-item">
-        <div class="hud-label">Pontos</div>
-        <div class="hud-val" id="scoreDisp">0</div>
+    <!-- HOME -->
+    <div class="screen active" id="home">
+      <div class="logo-big"><img src="./img/Carie-logo-removebg-preview.png" alt="Logo de um dente todo podre" style="width: 40%;"></div>
+      <div class="game-title">Cárie Xpert</div>
+      <div class="game-sub">4 fases clínicas progressivas sobre etiologia, diagnóstico, prevenção e tratamento.</div>
+      <div class="badge-row">
+        <span class="badge">Diagnóstico</span>→
+        <span class="badge">Prevenção</span>→
+        <span class="badge">Tratamento</span>→
+        <span class="badge">Manejo</span>
       </div>
-      <div class="hud-item">
-        <div class="hud-label">Questão</div>
-        <div class="hud-val" id="qNumDisp">1/5</div>
+      <button class="btn primary full" onclick="showStages()">Iniciar jogo →</button>
+      <button class="btn primary full" onclick="ResetStages()">Reiniciar</button>
+      <div class="game-sub">Feito por:<br>Kaylane Correia, Isabelly Lopes, Laysa Maria,<br>Bruna Gabriely e Gerlandia Souza</div>
+    </div>
+
+    <!-- STAGE SELECT -->
+    <div class="screen" id="stageSelect">
+      <div class="stage-topbar">
+        <button class="back-btn" onclick="show('home')">← Voltar</button>
+        <span style="font-size:clamp(12px,2vw,14px);font-weight:600;color:#e8e8e8">Comece a jogar</span>
+        <span style="min-width:60px"></span>
       </div>
-      <div class="hud-item">
-        <div class="hud-label">Vidas</div>
-        <div class="hud-val"><span class="lives-icons" id="livesDisp">❤❤❤</span></div>
+      <div class="stage-grid" id="stageGrid"></div>
+    </div>
+
+    <!-- GAMEPLAY -->
+    <div class="screen" id="gameplay">
+      <div class="stage-topbar">
+        <button class="back-btn" onclick="confirmBack()">← Menu</button>
+        <span class="stage-badge" id="stageLabel"></span>
+      </div>
+
+      <div class="top-bar">
+        <div class="hud-item">
+          <div class="hud-label">Pontos</div>
+          <div class="hud-val" id="scoreDisp">0</div>
+        </div>
+        <div class="hud-item">
+          <div class="hud-label">Questão</div>
+          <div class="hud-val" id="qNumDisp">1/5</div>
+        </div>
+        <div class="hud-item">
+          <div class="hud-label">Vidas</div>
+          <div class="hud-val"><span class="lives-icons" id="livesDisp">❤❤❤</span></div>
+        </div>
+      </div>
+
+      <div class="prog-wrap">
+        <div class="prog-bar" id="progBar" style="width:0%"></div>
+      </div>
+
+      <div class="qcard">
+        <h3 id="qtext"></h3>
+        <div class="opts" id="opts"></div>
+      </div>
+
+      <div class="feedback" id="feedback"></div>
+
+      <div class="row-end">
+        <div class="status-msg" id="statusMsg"></div>
+        <button class="btn primary" id="nextBtn" onclick="nextQuestion()" style="display:none">Próxima →</button>
       </div>
     </div>
 
-    <div class="prog-wrap"><div class="prog-bar" id="progBar" style="width:0%"></div></div>
-
-    <div class="qcard">
-      <h3 id="qtext"></h3>
-      <div class="opts" id="opts"></div>
+    <!-- END -->
+    <div class="screen" id="endScreen">
+      <div class="medal-big" id="medal"></div>
+      <div class="score-big" id="finalScore"></div>
+      <div style="font-size:clamp(11px,1.6vw,13px);color:#555">pontos acumulados</div>
+      <div class="result-msg" id="resultMsg"></div>
+      <div class="btn-row">
+        <button class="btn ghost" onclick="showStages()">Outras fases</button>
+        <button class="btn primary" onclick="show('home')">Menu principal</button>
+      </div>
     </div>
 
-    <div class="feedback" id="feedback"></div>
-
-    <div class="row-end">
-      <div class="status-msg" id="statusMsg"></div>
-      <button class="btn primary" id="nextBtn" onclick="nextQuestion()" style="display:none">Próxima →</button>
-    </div>
   </div>
 
-  <!-- END -->
-  <div class="screen" id="endScreen">
-    <div class="medal-big" id="medal"></div>
-    <div class="score-big" id="finalScore"></div>
-    <div style="font-size:clamp(11px,1.6vw,13px);color:#555">pontos acumulados</div>
-    <div class="result-msg" id="resultMsg"></div>
-    <div class="btn-row">
-      <button class="btn ghost" onclick="showStages()">Outras fases</button>
-      <button class="btn primary" onclick="show('home')">Menu principal</button>
-    </div>
-  </div>
-
-</div>
-
-<script>
-const STAGES=[
-  {id:0,name:"Etiologia",icon:"🦠",desc:"Fatores causadores",questions:[
-    {q:"Qual microrganismo é o principal agente etiológico da cárie dental?",opts:["Lactobacillus acidophilus","Streptococcus mutans","Porphyromonas gingivalis","Candida albicans"],ans:1,exp:"O S. mutans é o principal patógeno cariogênico: produz ácido lático e glucanos insolúveis que favorecem colonização e desmineralização."},
-    {q:"Segundo o Diagrama de Keyes, quais são os fatores primários da cárie?",opts:["Dieta + Tempo + Saliva","Hospedeiro + Substrato + Microrganismo","pH + Flúor + Placa","Genética + Higiene + Medicamentos"],ans:1,exp:"Keyes (1960) descreveu três esferas: hospedeiro (dente), substrato (dieta fermentável) e microrganismos. Newbrun adicionou o fator Tempo."},
-    {q:"Qual propriedade do S. mutans facilita sua adesão ao esmalte?",opts:["Produção de fluoreto","Síntese de glucanos insolúveis via glucosiltransferases","Produção de proteases","Formação de esporos"],ans:1,exp:"As GTFs sintetizam glucanos insolúveis a partir de sacarose, promovendo adesão irreversível ao esmalte."},
-    {q:"O que torna o biofilme cariogênico?",opts:["Pressão osmótica elevada","Seleção de espécies acidogênicas por exposição frequente a carboidratos","Ausência de flúor no esmalte","Aumento do pH bucal"],ans:1,exp:"A ingestão frequente de carboidratos seleciona bactérias acidogênicas e acidúricas, tornando o biofilme patogênico."},
-    {q:"Qual é o pH crítico de desmineralização do esmalte?",opts:["pH 6,5","pH 5,5","pH 4,5","pH 3,5"],ans:1,exp:"Abaixo de pH 5,5 a hidroxiapatita começa a se dissolver. Para a dentina o pH crítico é 6,5."}
-  ]},
-  {id:1,name:"Diagnóstico",icon:"🔬",desc:"Detecção e classificação",questions:[
-    {q:"No ICDAS, o código 2 corresponde a:",opts:["Cavidade com dentina exposta","Mancha visível apenas após secagem","Mancha visível sem secagem","Esmalte sadio"],ans:1,exp:"ICDAS 2 = mudança visível no esmalte somente após secagem por 5s. Sem secagem = ICDAS 1."},
-    {q:"Qual exame tem maior sensibilidade para detectar cárie proximal inicial?",opts:["Inspeção visual direta","Radiografia interproximal (bitewing)","Transiluminação (FOTI)","Sondagem com sonda pontiaguda"],ans:1,exp:"A radiografia bitewing é o padrão-ouro para cárie proximal, detectando lesões a partir do terço interno do esmalte."},
-    {q:"A lesão de mancha branca ativa distingue-se da inativa por:",opts:["Tamanho maior","Superfície opaca, rugosa e sem brilho","Cavitação presente","Coloração amarelada"],ans:1,exp:"Lesão ativa: opaca, áspera ao toque. Lesão inativa: brilhante, lisa, pode ser acastanhada."},
-    {q:"No CAMBRA, o paciente é ALTO RISCO quando:",opts:["Possui apenas fatores protetores","Tem um fator isolado sem protetores","Apresenta cárie ativa, baixo fluxo salivar e dieta cariogênica","Usa fio dental diariamente"],ans:2,exp:"Alto risco envolve múltiplos indicadores de doença com escassos fatores protetores."},
-    {q:"Quando é CONTRAINDICADA a sondagem com sonda pontiaguda?",opts:["Lesão cavitada com dentina exposta","Lesão de mancha branca não cavitada em esmalte","Cárie de cemento","Lesão em dentina profunda"],ans:1,exp:"A sondagem pode converter uma lesão reversível em irreversível ao romper a zona superficial mineralizada."}
-  ]},
-  {id:2,name:"Prevenção",icon:"🛡️",desc:"Fluoreto e controle",questions:[
-    {q:"Qual o mecanismo de ação principal do fluoreto?",opts:["Elimina todas as bactérias cariogênicas","Inibe desmineralização e favorece remineralização, formando fluorapatita","Aumenta o pH salivar acima de 7,0","Reduz a viscosidade da saliva"],ans:1,exp:"O fluoreto reduz a desmineralização e acelera a remineralização, formando fluorapatita mais resistente a ácidos."},
-    {q:"Concentração mínima de flúor em dentifrício eficaz em adultos:",opts:["250 ppm","500 ppm","1.000 ppm","5.000 ppm"],ans:2,exp:"Dentifrícios com ≥1.000 ppm têm eficácia comprovada. Abaixo de 1.000 ppm a eficácia é limitada em adultos."},
-    {q:"Método mais indicado para reduzir cárie oclusal em dentes recém-erupcionados:",opts:["Flúor gel","Selante de fóssulas e fissuras","Bochecho com clorexidina","Raspagem e alisamento radicular"],ans:1,exp:"O selante obstrui os sulcos oclusais impedindo acúmulo de biofilme, especialmente nos primeiros anos após erupção."},
-    {q:"A clorexidina atua no controle da cárie principalmente por:",opts:["Remineralização do esmalte","Ação antimicrobiana com substantividade, reduzindo S. mutans","Tamponamento do pH salivar","Estímulo à secreção salivar"],ans:1,exp:"A clorexidina tem ação antimicrobiana e substantividade — adere às superfícies orais por horas."},
-    {q:"O S. mutans transmite-se para a criança principalmente por:",opts:["Dentista durante atendimento","Cuidador/mãe via contato salivar","Água não fluoretada","Alimentos industrializados"],ans:1,exp:"Estudos de genotipagem mostram transmissão via beijos e utensílios compartilhados entre cuidador e criança."}
-  ]},
-  {id:3,name:"Clínica",icon:"🦷",desc:"Tratamento e manejo",questions:[
-    {q:"Em lesões não cavitadas, a odontologia minimamente invasiva preconiza:",opts:["Remoção e restauração imediata","Controle não operatório: higiene, fluoreto e monitoramento","Exodontia do elemento","Pulpotomia preventiva"],ans:1,exp:"A MI prioriza remineralização e controle da doença antes de qualquer intervenção restauradora."},
-    {q:"Na remoção seletiva em cárie profunda, mantém-se dentina afetada para:",opts:["Facilitar condensação do amálgama","Evitar exposição pulpar e permitir remineralização","Aumentar retenção da restauração","Reduzir tempo de atendimento"],ans:1,exp:"A dentina afetada preserva a vitalidade pulpar e pode se remineralizar sob a restauração."},
-    {q:"Qual material libera flúor de forma sustentada?",opts:["Resina composta microhíbrida","Amálgama de prata","Cimento de ionômero de vidro (CIV)","Cerâmica feldspática"],ans:2,exp:"O CIV libera fluoreto continuamente e tem adesão química a esmalte e dentina."},
-    {q:"No tratamento restaurador atraumático (ART), qual instrumento é usado?",opts:["Broca carbide em alta rotação","Laser de Er:YAG","Cureta de dentina (instrumento manual)","Piezoelétrico ultrassônico"],ans:2,exp:"O ART usa apenas curetas manuais, dispensando anestesia e equipamento rotatório."},
-    {q:"A cárie secundária está mais associada a:",opts:["Excesso de material restaurador","Microinfiltração marginal com biofilme na interface dente-restauração","Uso excessivo de fluoreto","Restaurações de resina em posteriores"],ans:1,exp:"Falhas marginais permitem infiltração de bactérias. O biofilme persistente na interface é o principal fator de cárie secundária."}
-  ]}
-];
-
-let state={currentStage:0,qIdx:0,score:0,lives:3,answered:false,stageScores:[null,null,null,null]};
-
-function show(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  window.scrollTo(0,0);
-}
-function showStages(){renderStageGrid();show('stageSelect')}
-
-function renderStageGrid(){
-  const g=document.getElementById('stageGrid');
-  g.innerHTML='';
-  STAGES.forEach((s,i)=>{
-    const unlocked=i===0||state.stageScores[i-1]!==null;
-    const done=state.stageScores[i]!==null;
-    const d=document.createElement('div');
-    d.className='stage-card'+(unlocked?'':' locked')+(done?' done':'');
-    d.innerHTML=`<div class="sc-icon">${s.icon}</div>
-      <div class="sc-name">${s.name}${done?' ✓':''}</div>
-      <div class="sc-desc">${s.desc}</div>
-      ${done?`<div class="sc-score">${state.stageScores[i]} pts</div>`:''}`;
-    if(unlocked)d.onclick=()=>startStage(i);
-    g.appendChild(d);
-  });
-}
-
-function startStage(i){
-  state.currentStage=i;state.qIdx=0;state.answered=false;state.lives=3;
-  document.getElementById('stageLabel').textContent=STAGES[i].icon+' '+STAGES[i].name;
-  renderQ();show('gameplay');
-}
-
-function confirmBack(){
-  if(confirm('Voltar ao menu? O progresso desta fase será perdido.')){show('home')}
-}
-
-function renderQ(){
-  const st=STAGES[state.currentStage];
-  const q=st.questions[state.qIdx];
-  const total=st.questions.length;
-  document.getElementById('scoreDisp').textContent=state.score;
-  document.getElementById('qNumDisp').textContent=(state.qIdx+1)+'/'+total;
-  document.getElementById('progBar').style.width=Math.round(state.qIdx/total*100)+'%';
-  renderLives();
-  document.getElementById('qtext').textContent=q.q;
-  const opts=document.getElementById('opts');
-  opts.innerHTML='';
-  q.opts.forEach((o,idx)=>{
-    const b=document.createElement('button');
-    b.className='opt';
-    b.textContent=String.fromCharCode(65+idx)+') '+o;
-    b.onclick=()=>selectOpt(idx);
-    opts.appendChild(b);
-  });
-  const fb=document.getElementById('feedback');
-  fb.className='feedback';fb.textContent='';
-  document.getElementById('statusMsg').textContent='';
-  document.getElementById('statusMsg').className='status-msg';
-  const nb=document.getElementById('nextBtn');
-  nb.style.display='none';nb.textContent='Próxima →';nb.onclick=nextQuestion;
-  state.answered=false;
-}
-
-function selectOpt(idx){
-  if(state.answered)return;
-  state.answered=true;
-  const q=STAGES[state.currentStage].questions[state.qIdx];
-  document.querySelectorAll('.opt').forEach(o=>o.classList.add('locked'));
-  document.querySelectorAll('.opt')[q.ans].classList.add('correct');
-  const fb=document.getElementById('feedback');
-  const sm=document.getElementById('statusMsg');
-  if(idx===q.ans){
-    state.score+=20;
-    fb.className='feedback show ok';fb.textContent='✓ Correto! '+q.exp;
-    sm.textContent='+20 pontos';sm.className='status-msg ok';
-  } else {
-    document.querySelectorAll('.opt')[idx].classList.add('wrong');
-    state.lives=Math.max(0,state.lives-1);
-    fb.className='feedback show err';fb.textContent='✗ Incorreto. '+q.exp;
-    sm.textContent='-1 vida';sm.className='status-msg err';
-  }
-  document.getElementById('scoreDisp').textContent=state.score;
-  renderLives();
-  const nb=document.getElementById('nextBtn');
-  nb.style.display='inline-block';
-  if(state.lives===0){nb.textContent='Ver resultado →';nb.onclick=()=>endStage(true)}
-}
-
-function renderLives(){
-  document.getElementById('livesDisp').innerHTML=
-    [0,1,2].map(i=>`<span style="opacity:${i<state.lives?1:.2}">❤</span>`).join('');
-}
-
-function nextQuestion(){
-  if(state.lives===0){endStage(true);return}
-  state.qIdx++;
-  if(state.qIdx>=STAGES[state.currentStage].questions.length)endStage(false);
-  else renderQ();
-}
-
-function endStage(fail){
-  state.stageScores[state.currentStage]=state.score;
-  const total=STAGES[state.currentStage].questions.length*20;
-  const pct=Math.round(state.score/total*100);
-  let medal,msg;
-  if(fail){medal='💔';msg='Você ficou sem vidas. Revise o conteúdo e tente novamente!'}
-  else if(pct>=90){medal='🏆';msg='Domínio completo! Você está pronto para a clínica.'}
-  else if(pct>=60){medal='🥈';msg='Bom desempenho! Revise os pontos que errou para consolidar.'}
-  else{medal='📚';msg='Reforce este tema antes de avançar.'}
-  document.getElementById('medal').textContent=medal;
-  document.getElementById('finalScore').textContent=state.score;
-  document.getElementById('resultMsg').textContent=msg;
-  show('endScreen');
-}
-</script>
+  <script src="./script.js"></script>
 </body>
+
 </html>
